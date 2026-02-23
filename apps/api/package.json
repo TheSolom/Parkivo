@@ -1,0 +1,52 @@
+{
+    "name": "@parkivo/api",
+    "version": "1.0.0",
+    "description": "parkivo api",
+    "license": "UNLICENSED",
+    "author": "TheSolom",
+    "type": "module",
+    "main": "./dist/server.js",
+    "scripts": {
+        "prepare": "husky",
+        "type-check": "tsc --noEmit",
+        "lint": "eslint \"{src,test}/**/*.ts\" --fix",
+        "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
+        "build": "tsc",
+        "start": "node --env-file=.env --import tsx/esm src/server.ts",
+        "start:dev": "node --env-file=.env --import tsx/esm --watch src/server.ts",
+        "start:debug": "node --env-file=.env --import tsx/esm --inspect --watch src/server.ts",
+        "start:prod": "node dist/server.js",
+        "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
+        "test:watch": "node --experimental-vm-modules node_modules/jest/bin/jest.js --watch",
+        "test:cov": "node --experimental-vm-modules node_modules/jest/bin/jest.js --coverage",
+        "test:debug": "node --experimental-vm-modules --inspect-brk node_modules/jest/bin/jest.js --runInBand",
+        "test:e2e": "node --experimental-vm-modules node_modules/jest/bin/jest.js --config ./test/jest-e2e.json"
+    },
+    "devDependencies": {
+        "@types/argon2": "^0.14.1",
+        "@types/compression": "^1.8.1",
+        "@types/cookie-parser": "^1.4.10",
+        "@types/cors": "^2.8.19",
+        "@types/express": "^5.0.6",
+        "@types/helmet": "^0.0.48",
+        "@types/jsonwebtoken": "^9.0.10",
+        "@types/morgan": "^1.9.10",
+        "@types/node": "^25.3.0",
+        "tsx": "^4.21.0"
+    },
+    "dependencies": {
+        "argon2": "^0.44.0",
+        "compression": "^1.8.1",
+        "cookie-parser": "^1.4.7",
+        "cors": "^2.8.6",
+        "express": "^5.2.1",
+        "express-rate-limit": "^8.2.1",
+        "helmet": "^8.1.0",
+        "jsonwebtoken": "^9.0.3",
+        "morgan": "^1.10.1",
+        "reflect-metadata": "^0.2.2",
+        "rfc9457": "^16.0.0",
+        "tsyringe": "^4.10.0",
+        "zod": "^4.3.6"
+    }
+}
