@@ -14,7 +14,7 @@ let server: Server;
 const startServer = () => {
     try {
         server = createApp().listen(env.PORT, () =>
-            console.log(`Server running on port ${env.PORT} in ${env.NODE_ENV} mode`),
+            logger.info(`Server running on port ${env.PORT} in ${env.NODE_ENV} mode`),
         );
     } catch (error) {
         logger.error(errors.server.db(error).toJSON(), 'Server startup failed');
@@ -26,8 +26,6 @@ const startServer = () => {
 startServer();
 
 process.on('unhandledRejection', (reason: unknown) => {
-    console.error('UNHANDLED REJECTION!, Shutting down...');
-
     if (reason instanceof Error) {
         logger.error(errors.server.unhandledRejection(reason).toJSON(), 'Unhandled Rejection');
     } else {
@@ -36,6 +34,7 @@ process.on('unhandledRejection', (reason: unknown) => {
             'Unhandled Rejection',
         );
     }
+    logger.flush();
 
     if (server) {
         server.close(() => process.exit(1));
@@ -48,6 +47,7 @@ process.on('SIGINT', () => {
     logger.info('SIGINT received. Shutting down gracefully...');
     server.close(() => {
         logger.info('✅ Server closed');
+        logger.flush();
         process.exit(0);
     });
 });
@@ -55,6 +55,7 @@ process.on('SIGTERM', () => {
     logger.info('SIGTERM received. Shutting down gracefully...');
     server.close(() => {
         logger.info('✅ Server closed');
+        logger.flush();
         process.exit(0);
     });
 });

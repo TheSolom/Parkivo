@@ -1,4 +1,7 @@
 import { z } from 'zod';
+import { error } from 'rfc9457';
+import logger from '../common/logger/logger.js';
+import { formatZodIssues } from '../common/utils/zod.js';
 
 const envSchema = z.object({
     NODE_ENV: z.enum(['development', 'production'], {
@@ -15,10 +18,11 @@ const envSchema = z.object({
 const parsed = envSchema.safeParse(process.env);
 
 if (!parsed.success) {
-    console.error('Invalid environment variables:');
-    parsed.error.issues.forEach((issue) => {
-        console.error(` - ${issue.path.join('.')}: ${issue.message}`);
-    });
+    logger.error(
+        error.envInvalid(formatZodIssues(parsed.error)).toJSON(),
+        'Invalid environment variables',
+    );
+    logger.flush();
     process.exit(1);
 }
 
