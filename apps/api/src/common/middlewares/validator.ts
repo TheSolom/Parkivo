@@ -1,15 +1,7 @@
 import { ZodError, type ZodRawShape, type ZodObject, type z } from 'zod';
-import { errors, type ValidationErrors } from 'rfc9457';
+import { errors } from 'rfc9457';
 import type { Request, Response, NextFunction } from 'express';
-
-function formatZodIssues(err: ZodError): ValidationErrors {
-    const errors: ValidationErrors = {};
-    err.issues.forEach((issue) => {
-        const field = issue.path.join('.') || 'root';
-        errors[field] = [issue.message];
-    });
-    return errors;
-}
+import { formatZodIssues } from '../utils/zod.js';
 
 /**
  * Generic validation middleware for type-safe Zod parsing

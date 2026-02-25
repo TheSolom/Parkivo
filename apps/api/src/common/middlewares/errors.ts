@@ -1,21 +1,13 @@
 import { ZodError } from 'zod';
-import { errors, isHttpError, type ValidationErrors } from 'rfc9457';
+import { errors, isHttpError } from 'rfc9457';
 import type { Request, Response, NextFunction } from 'express';
 import type { HttpError } from 'node_modules/rfc9457/dist/core/index.js';
+import { formatZodIssues } from '../utils/zod.js';
 import logger from '../logger/logger.js';
 
 interface ErrorLoggerOptions {
     logClientErrors?: boolean;
     logStack?: boolean;
-}
-
-function formatZodIssues(err: ZodError): ValidationErrors {
-    const errors: ValidationErrors = {};
-    err.issues.forEach((issue) => {
-        const field = issue.path.join('.') || 'root';
-        errors[field] = [issue.message];
-    });
-    return errors;
 }
 
 function toProblemDetails(err: Error): HttpError {
