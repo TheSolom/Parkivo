@@ -1,11 +1,14 @@
 {
     "extends": "../../tsconfig.json",
     "compilerOptions": {
-        "rootDir": "./src",
-        "outDir": "./dist",
-        "sourceMap": true,
-        "removeComments": true
+        "module": "ESNext",
+        "moduleResolution": "bundler",
+        "target": "ES2022",
+        "strict": true,
+        "esModuleInterop": true,
+        "ignoreDeprecations": "6.0",
+        "types": ["node", "module"]
     },
-    "include": ["src"],
+    "include": ["src", "prisma"],
     "exclude": ["node_modules", "dist"]
 }
