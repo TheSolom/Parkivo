@@ -1,0 +1,165 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  uid          String       @id @default(uuid())
+  firstName    String
+  lastName     String
+  email        String       @unique
+  passwordHash String
+  image        String?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  deletedAt    DateTime?
+
+  authProviders AuthProvider[]
+  admin         Admin?
+  manager       Manager?
+  customer      Customer?
+}
+
+model AuthProvider {
+  uid    String  @id @default(uuid())
+  type   String
+  userId String
+  user   User    @relation(fields: [userId], references: [uid])
+}
+
+model Admin {
+  uid            String        @id
+  role           String
+  user           User          @relation(fields: [uid], references: [uid])
+  verifications  Verification[]
+}
+
+model Manager {
+  uid       String  @id
+  companyId Int
+  user      User    @relation(fields: [uid], references: [uid])
+  company   Company @relation(fields: [companyId], references: [id])
+}
+
+model Customer {
+  uid          String @id
+  licencePlate String
+  user         User   @relation(fields: [uid], references: [uid])
+  bookings     Booking[]
+  reviews      Review[]
+}
+
+model Company {
+  id        Int       @id @default(autoincrement())
+  name      String
+  description String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+  managers  Manager[]
+  garages   Garage[]
+}
+
+model Garage {
+  id        Int       @id @default(autoincrement())
+  name      String
+  description String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+  companyId Int
+  company   Company   @relation(fields: [companyId], references: [id])
+  addresses Address[]
+  photos    GaragePhoto[]
+  slots     Slot[]
+  reviews   Review[]
+  verification Verification?
+}
+
+model GaragePhoto {
+  id       Int     @id @default(autoincrement())
+  path     String
+  isPrimary Boolean @default(false)
+  garageId Int
+  garage   Garage  @relation(fields: [garageId], references: [id])
+}
+
+model Address {
+  id        Int     @id @default(autoincrement())
+  address   String
+  latitude  Float
+  longitude Float
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  garageId  Int
+  garage    Garage  @relation(fields: [garageId], references: [id])
+}
+
+model Slot {
+  id          Int     @id @default(autoincrement())
+  name        String
+  pricePerHour Float
+  length      Int
+  width       Int
+  height      Int
+  type        String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  garageId    Int
+  garage      Garage  @relation(fields: [garageId], references: [id])
+  bookings    Booking[]
+}
+
+model Booking {
+  id           Int       @id @default(autoincrement())
+  pricePerHour  Float
+  totalPrice    Float
+  startTime     DateTime
+  endTime       DateTime
+  vehicleNumber String
+  phoneNumber   String
+  passcode      String
+  status        String
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  deletedAt     DateTime?
+  slotId        Int
+  slot          Slot      @relation(fields: [slotId], references: [id])
+  customerId    String
+  customer      Customer  @relation(fields: [customerId], references: [uid])
+  timelines     BookingTimeline[]
+}
+
+model BookingTimeline {
+  id        Int      @id @default(autoincrement())
+  status    String
+  timestamp DateTime @default(now())
+  bookingId Int
+  booking   Booking  @relation(fields: [bookingId], references: [id])
+  managerId String?
+}
+
+model Review {
+  id         Int      @id @default(autoincrement())
+  rating     Int
+  comment    String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [uid])
+  garageId   Int
+  garage     Garage   @relation(fields: [garageId], references: [id])
+}
+
+model Verification {
+  garageId  Int   @id
+  verified  Boolean @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  adminId   String
+  garage    Garage @relation(fields: [garageId], references: [id])
+  admin     Admin  @relation(fields: [adminId], references: [uid])
+}
