@@ -23,7 +23,6 @@
         "test:e2e": "node --experimental-vm-modules node_modules/jest/bin/jest.js --config ./test/jest-e2e.json"
     },
     "devDependencies": {
-        "@prisma/client": "^7.4.1",
         "@types/argon2": "^0.14.1",
         "@types/compression": "^1.8.1",
         "@types/cookie-parser": "^1.4.10",
@@ -33,20 +32,21 @@
         "@types/jsonwebtoken": "^9.0.10",
         "@types/node": "^25.3.2",
         "@types/pg": "^8.16.0",
-        "pg": "^8.19.0",
+        "dotenv": "^17.3.1",
         "prisma": "^7.4.1",
         "tsx": "^4.21.0"
     },
     "dependencies": {
+        "@prisma/client": "^7.4.1",
         "argon2": "^0.44.0",
         "compression": "^1.8.1",
         "cookie-parser": "^1.4.7",
         "cors": "^2.8.6",
-        "dotenv": "^17.3.1",
         "express": "^5.2.1",
         "express-rate-limit": "^8.2.1",
         "helmet": "^8.1.0",
         "jsonwebtoken": "^9.0.3",
+        "pg": "^8.19.0",
         "reflect-metadata": "^0.2.2",
         "rfc9457": "^16.0.0",
         "tsyringe": "^4.10.0",
