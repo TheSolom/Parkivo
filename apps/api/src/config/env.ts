@@ -7,12 +7,9 @@ const envSchema = z.object({
     NODE_ENV: z.enum(['development', 'production'], {
         message: 'NODE_ENV must be one of: development, production',
     }),
-    PORT: z
-        .string({
-            message: 'PORT is required',
-        })
-        .transform(Number),
+    PORT: z.string({ message: 'PORT is required' }).transform(Number),
     CLIENT_URL: z.string().optional(),
+    DATABASE_URL: z.string({ message: 'DATABASE_URL is required' }),
 });
 
 const parsed = envSchema.safeParse(process.env);
