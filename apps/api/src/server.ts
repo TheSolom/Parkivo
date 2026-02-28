@@ -1,61 +1,86 @@
 import type { Server } from 'node:http';
 import { errors } from 'rfc9457';
+import { env } from './config/env.js';
+import { prisma } from './config/prisma.js';
 import logger from './common/logger/logger.js';
 import { createApp } from './app.js';
-import { env } from './config/env.js';
 
-process.on('uncaughtException', (error: Error) => {
-    logger.fatal(errors.server.uncaughtException(error).toJSON(), 'Uncaught Exception');
-    logger.flush();
-    process.exit(1);
-});
+let server: Server | undefined;
+let isShuttingDown = false;
 
-let server: Server;
-const startServer = () => {
+const gracefulShutdown = async (signal: string) => {
+    if (isShuttingDown) return;
+    isShuttingDown = true;
+
+    logger.info(`${signal} received. Starting graceful shutdown...`);
+
     try {
-        server = createApp().listen(env.PORT, () =>
-            logger.info(`Server running on port ${env.PORT} in ${env.NODE_ENV} mode`),
-        );
+        if (server) {
+            await new Promise<void>((resolve, reject) => {
+                server!.close((err) => {
+                    if (err) reject(err);
+                    else resolve();
+                });
+            });
+            logger.info('HTTP server closed');
+        }
+
+        await prisma.$disconnect();
+        logger.info('Prisma disconnected');
+
+        logger.flush();
+        process.exit(0);
     } catch (error) {
-        logger.error(errors.server.db(error).toJSON(), 'Server startup failed');
+        logger.fatal(error, 'Error during shutdown');
         logger.flush();
         process.exit(1);
     }
 };
 
-startServer();
+const handleFatalError = async (
+    error: unknown,
+    type: 'uncaughtException' | 'unhandledRejection',
+) => {
+    if (isShuttingDown) return;
+    isShuttingDown = true;
 
-process.on('unhandledRejection', (reason: unknown) => {
-    if (reason instanceof Error) {
-        logger.error(errors.server.unhandledRejection(reason).toJSON(), 'Unhandled Rejection');
-    } else {
-        logger.error(
-            errors.server.unhandledRejection(new Error('Non-Error rejection')).toJSON(),
-            'Unhandled Rejection',
-        );
+    const err = error instanceof Error ? error : new Error('Unknown fatal error');
+
+    logger.fatal(errors.server[type](err).toJSON(), `Fatal: ${type}`);
+
+    try {
+        if (server) {
+            await new Promise<void>((resolve) => server!.close(() => resolve()));
+        }
+
+        await prisma.$disconnect();
+    } catch (shutdownError) {
+        logger.fatal(shutdownError, 'Shutdown after fatal error failed');
     }
-    logger.flush();
 
-    if (server) {
-        server.close(() => process.exit(1));
-    } else {
+    logger.flush();
+    process.exit(1);
+};
+
+const startServer = async () => {
+    await prisma.$connect();
+    try {
+        logger.info('Prisma connected');
+
+        server = createApp().listen(env.PORT, () => {
+            logger.info(`Server running on port ${env.PORT} in ${env.NODE_ENV} mode`);
+        });
+    } catch (error) {
+        logger.fatal(errors.server.db(error).toJSON(), 'Server startup failed');
+        logger.flush();
+        await prisma.$disconnect();
         process.exit(1);
     }
-});
+};
 
-process.on('SIGINT', () => {
-    logger.info('SIGINT received. Shutting down gracefully...');
-    server.close(() => {
-        logger.info('✅ Server closed');
-        logger.flush();
-        process.exit(0);
-    });
-});
-process.on('SIGTERM', () => {
-    logger.info('SIGTERM received. Shutting down gracefully...');
-    server.close(() => {
-        logger.info('✅ Server closed');
-        logger.flush();
-        process.exit(0);
-    });
-});
+void startServer();
+
+process.on('SIGINT', () => void gracefulShutdown('SIGINT'));
+process.on('SIGTERM', () => void gracefulShutdown('SIGTERM'));
+process.on('uncaughtException', (error) => void handleFatalError(error, 'uncaughtException'));
+process.on('unhandledRejection', (reason) => void handleFatalError(reason, 'unhandledRejection'));
