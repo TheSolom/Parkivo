@@ -6,15 +6,65 @@ datasource db {
   provider = "postgresql"
 }
 
+//////////////////////////////////////////////////////
+// ENUMS
+//////////////////////////////////////////////////////
+
+enum AuthProviderType {
+  CREDENTIALS
+  GOOGLE
+  FACEBOOK
+  APPLE
+}
+
+enum AdminRole {
+  SUPER_ADMIN
+  MODERATOR
+  SUPPORT
+}
+
+enum SlotType {
+  CAR
+  HEAVY
+  BIKE
+  BICYCLE
+  ELECTRIC
+}
+
+enum BookingStatus {
+  BOOKED
+  CANCELLED
+
+  VALET_ASSIGNED_FOR_CHECK_IN
+  VALET_PICKED_UP
+  CHECKED_IN
+
+  VALET_ASSIGNED_FOR_CHECK_OUT
+  CHECKED_OUT
+  VALET_RETURNED
+
+  COMPLETED
+}
+
+enum VerificationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+//////////////////////////////////////////////////////
+// MODELS
+//////////////////////////////////////////////////////
+
 model User {
-  uid          String       @id @default(uuid())
+  uid          String   @id @default(uuid())
   firstName    String
   lastName     String
-  email        String       @unique
+  email        String   @unique
   passwordHash String
   image        String?
-  createdAt    DateTime     @default(now())
-  updatedAt    DateTime     @updatedAt
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
   deletedAt    DateTime?
 
   authProviders AuthProvider[]
@@ -24,17 +74,17 @@ model User {
 }
 
 model AuthProvider {
-  uid    String  @id @default(uuid())
-  type   String
+  uid    String           @id @default(uuid())
+  type   AuthProviderType
   userId String
-  user   User    @relation(fields: [userId], references: [uid])
+  user   User             @relation(fields: [userId], references: [uid])
 }
 
 model Admin {
-  uid            String        @id
-  role           String
-  user           User          @relation(fields: [uid], references: [uid])
-  verifications  Verification[]
+  uid           String    @id
+  role          AdminRole
+  user          User      @relation(fields: [uid], references: [uid])
+  verifications Verification[]
 }
 
 model Manager {
@@ -45,76 +95,83 @@ model Manager {
 }
 
 model Customer {
-  uid          String @id
+  uid          String  @id
   licencePlate String
-  user         User   @relation(fields: [uid], references: [uid])
+  user         User    @relation(fields: [uid], references: [uid])
   bookings     Booking[]
   reviews      Review[]
 }
 
 model Company {
-  id        Int       @id @default(autoincrement())
-  name      String
+  id          Int       @id @default(autoincrement())
+  name        String
   description String
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  deletedAt DateTime?
-  managers  Manager[]
-  garages   Garage[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+
+  managers Manager[]
+  garages  Garage[]
 }
 
 model Garage {
-  id        Int       @id @default(autoincrement())
-  name      String
+  id          Int       @id @default(autoincrement())
+  name        String
   description String
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  deletedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+
   companyId Int
-  company   Company   @relation(fields: [companyId], references: [id])
-  addresses Address[]
-  photos    GaragePhoto[]
-  slots     Slot[]
-  reviews   Review[]
+  company   Company @relation(fields: [companyId], references: [id])
+
+  addresses    Address[]
+  photos       GaragePhoto[]
+  slots        Slot[]
+  reviews      Review[]
   verification Verification?
 }
 
 model GaragePhoto {
-  id       Int     @id @default(autoincrement())
-  path     String
+  id        Int     @id @default(autoincrement())
+  path      String
   isPrimary Boolean @default(false)
+
   garageId Int
   garage   Garage  @relation(fields: [garageId], references: [id])
 }
 
 model Address {
-  id        Int     @id @default(autoincrement())
+  id        Int      @id @default(autoincrement())
   address   String
   latitude  Float
   longitude Float
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  garageId  Int
-  garage    Garage  @relation(fields: [garageId], references: [id])
+
+  garageId Int
+  garage   Garage @relation(fields: [garageId], references: [id])
 }
 
 model Slot {
-  id          Int     @id @default(autoincrement())
-  name        String
+  id           Int      @id @default(autoincrement())
+  name         String
   pricePerHour Float
-  length      Int
-  width       Int
-  height      Int
-  type        String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  garageId    Int
-  garage      Garage  @relation(fields: [garageId], references: [id])
-  bookings    Booking[]
+  length       Int
+  width        Int
+  height       Int
+  type         SlotType
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  garageId Int
+  garage   Garage @relation(fields: [garageId], references: [id])
+
+  bookings Booking[]
 }
 
 model Booking {
-  id           Int       @id @default(autoincrement())
+  id            Int           @id @default(autoincrement())
   pricePerHour  Float
   totalPrice    Float
   startTime     DateTime
@@ -122,44 +179,57 @@ model Booking {
   vehicleNumber String
   phoneNumber   String
   passcode      String
-  status        String
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  status        BookingStatus
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
   deletedAt     DateTime?
-  slotId        Int
-  slot          Slot      @relation(fields: [slotId], references: [id])
-  customerId    String
-  customer      Customer  @relation(fields: [customerId], references: [uid])
-  timelines     BookingTimeline[]
+
+  slotId Int
+  slot   Slot @relation(fields: [slotId], references: [id])
+
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [uid])
+
+  timelines BookingTimeline[]
+
+  @@index([startTime, endTime])
 }
 
 model BookingTimeline {
-  id        Int      @id @default(autoincrement())
-  status    String
-  timestamp DateTime @default(now())
+  id        Int           @id @default(autoincrement())
+  status    BookingStatus
+  timestamp DateTime      @default(now())
+
   bookingId Int
-  booking   Booking  @relation(fields: [bookingId], references: [id])
+  booking   Booking @relation(fields: [bookingId], references: [id])
+
   managerId String?
 }
 
 model Review {
-  id         Int      @id @default(autoincrement())
-  rating     Int
-  comment    String
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id        Int      @id @default(autoincrement())
+  rating    Int
+  comment   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   customerId String
   customer   Customer @relation(fields: [customerId], references: [uid])
-  garageId   Int
-  garage     Garage   @relation(fields: [garageId], references: [id])
+
+  garageId Int
+  garage   Garage @relation(fields: [garageId], references: [id])
+
+  @@unique([customerId, garageId])
 }
 
 model Verification {
-  garageId  Int   @id
-  verified  Boolean @default(false)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  adminId   String
-  garage    Garage @relation(fields: [garageId], references: [id])
-  admin     Admin  @relation(fields: [adminId], references: [uid])
+  garageId Int @id
+
+  status    VerificationStatus @default(PENDING)
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+
+  adminId String
+  garage  Garage @relation(fields: [garageId], references: [id])
+  admin   Admin  @relation(fields: [adminId], references: [uid])
 }
