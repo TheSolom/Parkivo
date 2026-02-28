@@ -5,13 +5,14 @@ import helmet from 'helmet';
 import compression from 'compression';
 import cookieParser from 'cookie-parser';
 import { StatusCodes } from 'http-status-codes';
+import { env } from './config/env.js';
 import { requestLogger } from './common/middlewares/request-logger.js';
 import { errorResponder, notFoundResponder } from './common/middlewares/errors.js';
 
 export function createApp(): Application {
     const app: Application = express();
 
-    if (process.env.NODE_ENV === 'production') app.set('trust proxy', 1);
+    if (env.NODE_ENV === 'production') app.set('trust proxy', 1);
     app.disable('x-powered-by');
 
     app.use(express.urlencoded({ extended: true }));
